@@ -66,7 +66,7 @@ def start():
         if ip != '255.255.255.255':
             current = pathlib.Path(__file__).parent.resolve()
             os.chdir(current)
-            cmd = f'python3 DRipper.py --quiet -s {ip} -t 40 -p {port}'
+            cmd = f'python3 DRipper.py --quiet -s {ip} -t 135 -p {port}'
             sub = subprocess.Popen(cmd, shell=True)
             processes.append(sub)
 
