@@ -3,7 +3,6 @@ import os
 import pathlib
 import random
 import subprocess
-import tkinter
 import tkinter as tk
 import docker
 
@@ -104,10 +103,10 @@ def run_docker(ip, port):
 
 radioSelector = tk.IntVar()
 radio1 = tk.Radiobutton(app, text="DRipper", variable=radioSelector, value=0)
-radio1.pack(side=tkinter.TOP)
+radio1.pack(side=tk.TOP)
 radio1.select()
 radio2 = tk.Radiobutton(app, text="Bombardier (Docker)", variable=radioSelector, value=1)
-radio2.pack(side=tkinter.TOP)
+radio2.pack(side=tk.TOP)
 
 
 btn = tk.Button(app, text='Start', bd='5', command=start)
